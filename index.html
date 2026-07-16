@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mock Quiz — CFP2</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFFFEB;--blue:#0549FE;--green:#33DF93;--yellow:rgb(237,255,40);
+  --pink:#FF53FF;--black:#1A1A1A;--gold:#E4D64D;--muted:#888;
+  --white:#fff;--border:#E0DFDF;--shadow:0 2px 12px rgba(0,0,0,.08);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.18)
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);font-family:'Prompt',sans-serif;color:var(--black);min-height:100vh;overflow-x:hidden}
+.screen{display:none;flex-direction:column;align-items:center;min-height:100vh}
+.screen.active{display:flex}
+
+/* ===== HOME ===== */
+#home-screen{background:var(--bg);padding-bottom:100px}
+.home-col{width:100%;max-width:420px;padding:0 18px}
+.home-top{padding-top:13px}
+.badge-pill{background:var(--blue);color:#fff;font-size:.72rem;font-weight:700;letter-spacing:.6px;padding:5px 14px;border-radius:20px;display:inline-flex;align-items:center;margin-bottom:13px}
+.home-title{font-size:2.6rem;font-weight:800;line-height:1;color:var(--black);margin-bottom:6px}
+.home-sub{font-size:.8rem;color:var(--muted);font-family:'Sarabun',sans-serif;margin-bottom:20px}
+
+.quiz-set-card{
+  background:var(--blue);border-radius:17px;padding:22px 22px 20px;
+  margin-bottom:12px;cursor:pointer;transition:transform .14s;position:relative;overflow:hidden
+}
+.quiz-set-card:active{transform:scale(.97)}
+.qsc-label{font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:4px}
+.qsc-meta{font-size:.72rem;color:rgba(255,255,255,.6);font-family:'Sarabun',sans-serif}
+.qsc-arrow{position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:1.4rem;color:rgba(255,255,255,.5)}
+.qsc-badge{display:inline-block;background:var(--yellow);color:var(--black);font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:20px;margin-top:8px}
+
+/* ===== QUIZ SCREEN ===== */
+#quiz-screen{background:var(--bg);justify-content:flex-start}
+.quiz-bar{
+  width:100%;background:var(--blue);
+  display:flex;align-items:center;gap:10px;
+  padding:11px 14px;position:sticky;top:0;z-index:100
+}
+.back-btn{width:36px;height:36px;border-radius:9px;border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;font-size:1.1rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.back-btn:active{transform:scale(.9)}
+.qb-info{flex:1}
+.qb-title{font-size:.84rem;font-weight:700;color:#fff;line-height:1.2}
+.qb-sub{font-size:.67rem;color:rgba(255,255,255,.5);font-family:'Sarabun',sans-serif}
+.q-counter{background:var(--yellow);color:var(--black);border-radius:9px;padding:5px 11px;text-align:center;min-width:50px}
+.q-counter-val{font-size:1.1rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.q-counter-lbl{font-size:.52rem;opacity:.55;letter-spacing:.8px}
+
+/* Progress bar */
+.progress-wrap{width:100%;background:rgba(255,255,255,.15);height:4px}
+.progress-bar{height:4px;background:var(--yellow);transition:width .3s ease}
+
+.quiz-body{width:100%;max-width:420px;padding:18px 14px;display:flex;flex-direction:column;gap:14px;flex:1;padding-bottom:100px}
+
+.q-number-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border-radius:10px;
+  background:var(--blue);color:#fff;
+  font-size:.8rem;font-weight:800;flex-shrink:0
+}
+.q-text-wrap{display:flex;gap:10px;align-items:flex-start}
+.q-text{
+  background:#fff;border:1px solid var(--border);
+  border-radius:13px;padding:14px 16px;
+  font-family:'Sarabun',sans-serif;font-size:.9rem;line-height:1.85;
+  box-shadow:var(--shadow);flex:1;white-space:pre-line
+}
+
+.choices-list{display:flex;flex-direction:column;gap:8px}
+.choice-btn{
+  width:100%;background:#fff;border:2px solid var(--border);
+  border-radius:13px;padding:13px 16px;
+  font-family:'Sarabun',sans-serif;font-size:.88rem;
+  text-align:left;cursor:pointer;transition:all .15s;
+  display:flex;align-items:flex-start;gap:10px;line-height:1.6;
+  color:var(--black)
+}
+.choice-btn:active{transform:scale(.98)}
+.choice-btn.selected{
+  border-color:var(--blue);background:rgba(5,73,254,.07);
+}
+.choice-num{
+  flex-shrink:0;width:24px;height:24px;border-radius:7px;
+  background:#f0f0e8;font-size:.72rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  margin-top:1px;transition:all .15s
+}
+.choice-btn.selected .choice-num{background:var(--blue);color:#fff}
+
+/* Nav buttons */
+.quiz-nav{
+  position:fixed;bottom:0;left:0;right:0;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;
+  padding:0 0 24px;z-index:1000
+}
+.quiz-nav-line{width:auto;margin:0 18px 12px;height:2px;background:var(--border)}
+.quiz-nav-btns{width:100%;max-width:420px;padding:0 14px;display:flex;gap:8px}
+.btn-prev{
+  flex:0 0 auto;padding:13px 18px;background:#fff;color:var(--black);
+  border:1px solid var(--border);border-radius:13px;
+  font-family:'Prompt',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer
+}
+.btn-next{
+  flex:1;padding:13px;background:var(--blue);color:#fff;
+  border:none;border-radius:13px;
+  font-family:'Prompt',sans-serif;font-size:.93rem;font-weight:700;cursor:pointer;
+  box-shadow:0 4px 16px rgba(5,73,254,.3)
+}
+.btn-submit{
+  flex:1;padding:13px;background:var(--green);color:var(--black);
+  border:none;border-radius:13px;
+  font-family:'Prompt',sans-serif;font-size:.93rem;font-weight:700;cursor:pointer;
+  box-shadow:0 4px 16px rgba(51,223,147,.3)
+}
+.btn-prev:active,.btn-next:active,.btn-submit:active{transform:scale(.98)}
+
+/* ===== RESULT SCREEN ===== */
+#result-screen{background:var(--bg);justify-content:flex-start;overflow-y:auto}
+.result-hdr{width:100%;padding:26px 20px 22px;text-align:center;position:relative}
+.result-emoji{font-size:54px;display:block;animation:bounceIn .5s ease;margin-bottom:8px}
+@keyframes bounceIn{0%{transform:scale(0)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+.result-heading{font-size:1.55rem;font-weight:800;margin-bottom:4px}
+.result-sublabel{font-size:.78rem;color:rgba(26,26,26,.5);font-family:'Sarabun',sans-serif}
+.result-body{width:100%;max-width:420px;padding:16px 16px 120px;display:flex;flex-direction:column;gap:12px}
+
+.score-card{
+  background:#fff;border:1px solid var(--border);border-radius:15px;
+  padding:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;box-shadow:var(--shadow)
+}
+.score-stat{text-align:center}
+.score-val{font-size:1.45rem;font-weight:800;line-height:1}
+.score-lbl{font-size:.68rem;color:var(--muted);font-family:'Sarabun',sans-serif;margin-top:3px}
+
+/* Answer review list */
+.review-hd{font-size:.78rem;font-weight:700;opacity:.5;margin-bottom:10px}
+.review-box{background:#fff;border:1px solid var(--border);border-radius:15px;padding:14px;box-shadow:var(--shadow)}
+.rv-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background .12s;border-radius:8px;padding:10px 6px
+}
+.rv-item:last-child{border-bottom:none}
+.rv-item:active{background:#f5f5ee}
+.rv-num{
+  width:28px;height:28px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;font-weight:800
+}
+.rv-num.ok{background:rgba(51,223,147,.2);color:#006640}
+.rv-num.no{background:rgba(230,57,70,.12);color:#e63946}
+.rv-content{flex:1}
+.rv-qtext{font-size:.76rem;font-family:'Sarabun',sans-serif;color:var(--muted);line-height:1.4;margin-bottom:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.rv-answer{font-size:.8rem;font-weight:600}
+.rv-answer.ok{color:#006640}
+.rv-answer.no{color:#e63946}
+.rv-tap{font-size:.65rem;color:var(--muted);opacity:.6;font-family:'Sarabun',sans-serif;flex-shrink:0}
+
+.result-btns{display:flex;flex-direction:column;gap:9px}
+.btn-blue{width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:13px;font-family:'Prompt',sans-serif;font-size:.93rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(5,73,254,.28)}
+.btn-outline{width:100%;padding:13px;background:#fff;color:var(--black);border:1px solid var(--border);border-radius:13px;font-family:'Prompt',sans-serif;font-size:.93rem;font-weight:600;cursor:pointer}
+.btn-blue:active,.btn-outline:active{transform:scale(.98)}
+
+/* Bottom nav */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;padding:0 0 24px;z-index:1000}
+.bottom-nav-line{width:auto;margin:0 18px 12px;height:2px;background:var(--border)}
+.bottom-nav-btns{display:flex;justify-content:center;align-items:center;gap:14px}
+.nav-btn{width:56px;height:56px;border-radius:50%;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .13s;flex-shrink:0;padding:0}
+.nav-btn:active{transform:scale(.9)}
+.nb-blue{background:var(--blue)}.nb-pink{background:var(--pink)}.nb-green{background:var(--green)}
+
+/* MODAL — question detail popup */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:9000;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-sheet{width:100%;max-width:420px;background:#fff;border-radius:20px 20px 0 0;padding:22px 18px 38px;animation:slideUp .3s ease;max-height:85vh;overflow-y:auto}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:38px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.modal-q-num{font-size:.72rem;font-weight:700;color:var(--blue);margin-bottom:6px}
+.modal-q-text{font-size:.92rem;font-family:'Sarabun',sans-serif;line-height:1.85;margin-bottom:16px;color:var(--black);white-space:pre-line}
+.modal-choices{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
+.modal-choice{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:11px 13px;border-radius:11px;border:2px solid var(--border);
+  font-family:'Sarabun',sans-serif;font-size:.85rem;line-height:1.55
+}
+.modal-choice.correct{border-color:var(--green);background:rgba(51,223,147,.1)}
+.modal-choice.wrong{border-color:#e63946;background:rgba(230,57,70,.06)}
+.modal-choice.neutral{border-color:var(--border)}
+.mc-num{flex-shrink:0;width:22px;height:22px;border-radius:6px;background:#f0f0e8;font-size:.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.modal-choice.correct .mc-num{background:var(--green);color:var(--black)}
+.modal-choice.wrong .mc-num{background:#e63946;color:#fff}
+.modal-close{width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:11px;font-family:'Prompt',sans-serif;font-weight:600;font-size:.88rem;cursor:pointer}
+
+/* Confetti */
+.confetti-wrap{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:9999}
+.confetti-dot{position:absolute;top:-20px;border-radius:2px;animation:cfall linear forwards}
+@keyframes cfall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+@keyframes wobble{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+
+/* Timer */
+.timer-box{background:var(--yellow);color:var(--black);border-radius:9px;padding:5px 11px;text-align:center;min-width:58px}
+.timer-val{font-size:1.1rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.timer-lbl{font-size:.52rem;opacity:.55;letter-spacing:.8px}
+.timer-box.urgent{background:#e63946;color:#fff;animation:tpulse .5s infinite alternate}
+@keyframes tpulse{from{opacity:1}to{opacity:.6}}
+
+/* Check button */
+.check-btn{
+  background:var(--pink);color:#fff;
+  border:none;border-radius:9px;
+  padding:0 14px;height:46px;
+  font-family:'Prompt',sans-serif;
+  font-size:.75rem;font-weight:700;cursor:pointer;flex-shrink:0;
+}
+.check-btn:active{transform:scale(.93)}
+
+/* Question grid modal */
+.q-grid-wrap{
+  display:flex;flex-wrap:wrap;gap:7px;
+  padding:4px 0 8px;
+}
+.q-cell{
+  width:38px;height:38px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.78rem;font-weight:700;cursor:pointer;
+  transition:all .12s;flex-shrink:0;
+  background:#f0f0e8;color:var(--muted);border:2px solid transparent;
+  font-family:'Prompt',sans-serif;
+}
+.q-cell.answered{background:rgba(255,83,255,.12);color:#aa00aa;border-color:rgba(255,83,255,.35)}
+.q-cell.current{border-color:var(--blue);background:#fff;color:var(--blue);font-weight:800}
+.q-cell.answered.current{background:rgba(255,83,255,.18);border-color:var(--blue);color:#aa00aa}
+.q-cell:active{transform:scale(.88)}
+/* Planner */
+.planner-hdr{width:100%;background:var(--green);padding:18px 18px 22px;display:flex;align-items:center;gap:12px}
+.planner-hdr-back{width:36px;height:36px;border-radius:9px;border:1px solid rgba(0,0,0,.18);background:transparent;color:var(--black);font-size:1.1rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.planner-body{width:100%;max-width:420px;padding:18px 16px 120px;display:flex;flex-direction:column;gap:14px}
+.pl-card{background:#fff;border:1px solid var(--border);border-radius:15px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.pl-card-title{font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px}
+.pl-stat-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.pl-stat-label{font-size:.85rem;font-family:'Sarabun',sans-serif;color:var(--black)}
+.pl-stat-val{font-size:1.1rem;font-weight:800;color:var(--blue)}
+.pl-divider{height:1px;background:var(--border);margin:10px 0}
+.pl-highlight{background:rgba(51,223,147,.15);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
+.pl-highlight-label{font-size:.82rem;font-family:'Sarabun',sans-serif;color:#006640}
+.pl-highlight-val{font-size:1.3rem;font-weight:800;color:#006640}
+.pl-hrs-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.pl-hrs-label{font-size:.88rem;font-family:'Sarabun',sans-serif;flex:1}
+.pl-hrs-select{border:2px solid var(--border);border-radius:9px;padding:8px 10px;font-family:'Prompt',sans-serif;font-size:.95rem;font-weight:700;color:var(--black);background:#fff;outline:none;width:90px;text-align:center}
+.pl-hrs-select.editing{border-color:#e63946;background:rgba(230,57,70,.05)}
+.progress-track{height:10px;background:#f0f0e8;border-radius:5px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;border-radius:5px 0 0 5px;background:rgb(175,255,235);transition:width .4s ease,background .4s ease}
+.pl-progress-labels{display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-top:4px;font-family:'Sarabun',sans-serif}
+.pl-lesson-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.pl-lesson-row:last-child{border-bottom:none}
+.pl-lesson-name{font-size:.82rem;font-family:'Sarabun',sans-serif;color:var(--black)}
+.pl-lesson-hrs{font-size:.88rem;font-weight:700;color:var(--blue)}
+.pl-btn-row{display:flex;gap:8px}
+.pl-btn-green{flex:1;padding:13px;background:var(--green);color:var(--black);border:none;border-radius:13px;font-family:'Prompt',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer}
+.pl-btn-outline{flex:1;padding:13px;background:#fff;color:var(--black);border:1px solid var(--border);border-radius:13px;font-family:'Prompt',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer}
+.pl-no-date{background:#fff8e6;border:1px dashed #e8c84a;border-radius:12px;padding:14px;text-align:center;font-size:.84rem;font-family:'Sarabun',sans-serif;color:#7a6000}
+.pl-toggle-btn{padding:10px;border-radius:10px;font-family:'Prompt',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;border:2px solid var(--border);background:#fff;color:var(--muted);transition:all .15s}
+.pl-toggle-btn.active{border-color:var(--green);background:rgba(51,223,147,.15);color:#006640}
+.pl-checkbox-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:background .12s}
+.pl-checkbox-row:has(input:checked){background:rgba(5,73,254,.06);border-color:rgba(5,73,254,.3)}
+.pl-checkbox-row input{width:16px;height:16px;accent-color:var(--blue);flex-shrink:0}
+.pl-checkbox-label{font-size:.84rem;font-family:'Sarabun',sans-serif;color:var(--black)}
+</style>
+</head>
+<body>
+
+<!-- ===== HOME ===== -->
+<div class="screen active" id="home-screen">
+  <div class="home-col">
+    <div class="home-top">
+      <div class="badge-pill">Mock Quiz — CFP2</div>
+      <div class="home-title">ข้อสอบ<br>Mock Test</div>
+      <div class="home-sub" id="mock-countdown-text">— ตั้งวันสอบได้ที่ปุ่มชมพูด้านล่าง —</div>
+    </div>
+
+    <div id="set-list"></div>
+
+    <div class="quiz-set-card" onclick="goToComingSoon()" style="background:var(--green);margin-top:0">
+      <div class="qsc-label" style="color:#fff">เกมอื่นๆ และแหล่งความรู้</div>
+      <div class="qsc-meta" style="color:rgba(255,255,255,.7)">เครื่องมือพัฒนาทักษะสายการเงิน</div>
+      <div class="qsc-badge" style="background:var(--pink);color:var(--black);margin-top:8px">ต่อไป →</div>
+      <div class="qsc-arrow" style="color:rgba(255,255,255,.5)">›</div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="bottom-nav-line"></div>
+    <div class="bottom-nav-btns">
+      <button class="nav-btn nb-blue" onclick="goHome()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 66 66" width="45" height="45"><path fill="none" stroke="#fff" stroke-width="2" stroke-miterlimit="10" d="M41,45.1h-17c-1.1,0-2-0.9-2-2V29.7c0-1,0.5-1.9,1.2-2.5l7.3-5.6c1.1-0.9,2.7-0.9,3.8,0l7.3,5.6c0.8,0.6,1.2,1.5,1.2,2.5v13.4C42.9,44.2,42.1,45.1,41,45.1z"/></svg>
+      </button>
+      <button class="nav-btn nb-pink" onclick="openDateModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 66 66" width="45" height="45"><path fill="none" stroke="#fff" stroke-width="2" stroke-miterlimit="10" d="M41.9,45h-19c-1.4,0-2.5-1.1-2.5-2.5v-19c0-1.4,1.1-2.5,2.5-2.5h19c1.4,0,2.5,1.1,2.5,2.5v19C44.4,43.9,43.2,45,41.9,45z"/><line fill="none" stroke="#fff" stroke-width="2" stroke-miterlimit="10" x1="20.4" y1="28.3" x2="44.4" y2="28.3"/></svg>
+      </button>
+      <button class="nav-btn nb-green" onclick="goToPlanner()">
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 66 66" width="45" height="45" xml:space="preserve">
+          <circle fill="#fff" cx="33" cy="33" r="2.6"/>
+          <path fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-miterlimit="10" d="M33,17.8V21c6.6,0,12,5.4,12,12s-5.4,12-12,12s-12-5.4-12-12c0-2.4,0.7-4.7,2-6.6"/>
+          <line fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-miterlimit="10" x1="30.7" y1="17.8" x2="35.3" y2="17.8"/>
+          <polyline fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-miterlimit="10" points="38.8,30 32.9,33.3 27.1,23"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== QUIZ ===== -->
+<div class="screen" id="quiz-screen">
+  <div class="quiz-bar">
+    <button class="back-btn" onclick="confirmBackToHome()">←</button>
+    <div class="qb-info">
+      <div class="qb-title" id="quiz-set-title">—</div>
+      <div class="qb-sub" id="quiz-set-sub">—</div>
+    </div>
+    <button class="check-btn" id="check-btn" onclick="openGridModal()">เช็ค</button>
+    <div class="q-counter" id="q-counter">
+      <div class="q-counter-val" id="q-counter-val">0/5</div>
+      <div class="q-counter-lbl" id="q-counter-lbl">ตอบแล้ว</div>
+    </div>
+    <div class="timer-box" id="timer-box" style="display:none">
+      <div class="timer-val" id="timer-val">00:00</div>
+      <div class="timer-lbl">เวลา</div>
+    </div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+  </div>
+  <div class="quiz-body" id="quiz-body"></div>
+  <div class="quiz-nav">
+    <div class="quiz-nav-line"></div>
+    <div class="quiz-nav-btns">
+      <button class="btn-prev" id="btn-prev" onclick="prevQ()">← ก่อนหน้า</button>
+      <button class="btn-next" id="btn-next" onclick="nextQ()">ถัดไป →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RESULT ===== -->
+<div class="screen" id="result-screen">
+  <div class="result-hdr" id="result-hdr">
+    <span class="result-emoji" id="result-emoji">🎉</span>
+    <div class="result-heading" id="result-heading">—</div>
+    <div class="result-sublabel" id="result-sublabel">—</div>
+  </div>
+  <div class="result-body">
+    <div class="score-card">
+      <div class="score-stat"><div class="score-val" id="r-score" style="color:var(--blue)">—</div><div class="score-lbl">คะแนน</div></div>
+      <div class="score-stat"><div class="score-val" id="r-correct" style="color:#22c07c">—</div><div class="score-lbl">ถูก/ทั้งหมด</div></div>
+      <div class="score-stat"><div class="score-val" id="r-pct" style="color:#e76f51">—</div><div class="score-lbl">เปอร์เซ็นต์</div></div>
+    </div>
+    <div class="review-box">
+      <div class="review-hd">สรุปคำตอบ — แตะเพื่อดูโจทย์</div>
+      <div id="review-list"></div>
+    </div>
+    <div class="result-btns">
+      <button class="btn-blue" onclick="retryQuiz()">🔄 เล่นอีกครั้ง (สลับตัวเลือกใหม่)</button>
+      <button class="btn-outline" onclick="goHome()">← กลับหน้าหลัก</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="detail-modal" onclick="closeModalOuter(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-q-num" id="modal-q-num"></div>
+    <div class="modal-q-text" id="modal-q-text"></div>
+    <div class="modal-choices" id="modal-choices"></div>
+    <div id="modal-explain" style="display:none;background:rgba(51,223,147,.12);border:1px solid rgba(51,223,147,.5);border-radius:11px;padding:13px 15px;margin-bottom:18px;font-family:'Sarabun',sans-serif;font-size:.85rem;line-height:1.8;color:#004d30"></div>
+    <button class="modal-close" onclick="closeModal()">ปิด</button>
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+const SETS = [
+  {
+    name: "ชุดที่ 1",
+    questions: [
+      {q:"ข้อความต่อไปนี้ข้อใด ถูกต้องที่สุด",choices:["มาตรวัดของ Sharpe ควรใช้วัดเพื่อคำนวนหรือกำหนดผลตอบแทนให้ผู้จัดการกองทุนมากที่สุด เนื่องจากวัดในระดับความเสี่ยงในระดับ Absolute มากที่สุด","ไม่มีข้อใดถูก","มาตรวัดของ Treynor ไม่ใช้ค่าเบต้าของพอร์ต จึงไม่เหมาะหากจะใช้เพื่อเปรียบเทียบกับผลตอบแทนของตลาด แต่ควรใช้เพื่อวัดผลตอบแทนของกลุ่มหลักทรัพย์เชิงรุก","มาตรวัด Appraisal Ratio เป็นมาตรวัดที่สามารถตีค่าเป็นมูลค่าได้ จึงควรใช้วัดเพื่อกำหนดค่าตอบแทนผู้จัดการกองทุน"],answer:1,explain:"Sharpe ควรใช้ในกรณีที่ลงทุนหลักทรัพย์เพียงกลุ่มเดียว\nTreynor ควรใช้วัด ในกรณีการลงทุนเชิงรับ\nAppraisal Ratio ควรใช้สำหรับการลงทุนเชิงรุก",ref:{source:"ชุดวิชาที่ 2 การวางแผนการลงทุน บทที่ 9 หน้า 29",type:"ความเข้าใจเนื้อหา",level:"-"}},
+      {q:"จงหาอัตราผลตอบแทนต่อปี หากอัตราผลตอบแทนรายเดือนของการลงทุนในตลาดหุ้นเฉลี่ยอยู่ที่ 1.2% ต่อเดือน",choices:["ข้อมูลไม่เพียงพอต่อการคำนวน","12.0%","15.4%","14.4%"],answer:2,explain:"อัตราผลตอบแทนต่อปี = ((1+r)^12)-1\n= ((1 + 0.012)^12)-1\n= (1.012)^12 - 1\n= 1.1540 - 1\n= 15.40%",ref:{source:"ชุดวิชาที่ 2 การวางแผนการลงทุน บทที่ 9 การวัดผลตอบแทนของกลุ่มหลักทรัพย์ หน้า 12",type:"การคำนวณ",level:"Basic"}},
+      {q:"กองทุนยิ่งรวยลงทุนในหุ้นสามัญ AA ในปี 25x0 โดยซื้อจากตลาดหลักทรัพย์ในราคา 10.00 บาทต่อหุ้น ต่อมาเมื่อวันที่ 30 พฤศจิกายน ปี 25x1 บริษัทผู้ออกหุ้นได้ทำการแตกพาร์ โดยแตกหุ้นเดิมเป็นหุ้นใหม่ในอัตรา 1:10 และในเดือนเมษายน ปีนี้ (25x2) บริษัทฯ ประกาศจ่ายเงินปันผลจำนวน 10 สตางค์ต่อหุ้น ณ ปัจจุบันหุ้น AA มีราคาปิดที่ 1.50 บาท จงคำนวณหาอัตราผลตอบแทนต่อ 1 งวด",choices:["60.00% (กำไร 60%)","ขาดทุน 84.00%","50.00% (กำไร 50%)","51.00% (กำไร 51%)"],answer:0,explain:"การแตกหุ้น 1:10 ทำให้หุ้นเดิม 1 หุ้น = 10 หุ้นใหม่\nต้นทุนหุ้น 10 บาทต่อหุ้น → ราคาต้นทุนต่อหุ้นกลายเป็น 1 บาท\n\nอัตราผลตอบแทนต่องวด = (ราคาปลายงวด - ราคาต้นงวด + เงินปันผล) / ราคาต้นงวด\n= (1.50 - 1.00 + 0.10) / 1.00\n= 0.60\n= 60%",ref:{source:"ชุดวิชาที่ 2 การวางแผนการลงทุน หัวข้อที่ 9 การวัดผลตอบแทนกลุ่มหลักทรัพย์ หน้า 3-4",type:"การคำนวณ",level:"-"}},
+      {q:"นักลงทุนรายหนึ่งต้องการสร้างกลุ่มการลงทุนในพันธบัตรรัฐบาลด้วยเงินลงทุน 15 ล้านบาท และดูเรชันประมาณ 4.1 ปี นักลงทุนมีทางเลือกในการลงทุน ประกอบด้วยพันธบัตรรัฐบาลอายุ 1, 3, 5, 7 และ 9 ปี ตามตารางด้านล่าง โดยมีทางเลือกในการจัดน้ำหนักการลงทุน 3 ทางเลือก (3 portfolios) ดังแสดงใน 3 คอลัมน์สุดท้ายของตาราง[TABLE]หากนักลงทุนต้องการสร้างกลุ่มการลงทุนในตราสารหนี้ที่มีความผันผวนของผลตอบแทนที่ได้รับจากการลงทุนต่ำที่สุดเมื่ออัตราดอกเบี้ยมีการปรับเพิ่มขึ้นหรือลดลง นักลงทุนควรเลือกกลุ่มการลงทุนใด",table:{headers:["อายุ (ปี)","ผลตอบแทน (%)","ดูเรชัน","Portfolio ก. (ล้านบ.)","Portfolio ข. (ล้านบ.)","Portfolio ค. (ล้านบ.)"],rows:[["1","2.20","1.0","3","0","0"],["3","3.30","2.9","3","0","9"],["5","4.00","4.1","3","15","0"],["7","5.00","5.9","3","0","6"],["9","6.10","6.7","3","0","0"],["รวม","","","15","15","15"],["Duration","","","4.1","4.1","4.1"]]},choices:["Portfolio ก.","Portfolio ก. และ ข.","Portfolio ค.","Portfolio ข."],answer:0,explain:"Portfolio ทั้ง 3 มีค่าดูเรชั่นเท่ากัน\nดังนั้น Ladder Portfolio (Portfolio ก.) จะเหมาะกับนักลงทุนที่ต้องการลดความผันผวนของผลตอบแทนเมื่ออัตราดอกเบี้ยมีการปรับเพิ่มขึ้นหรือลดลง",ref:{source:"ชุดวิชาที่ 2 การวางแผนการลงทุน บทที่ 8 กลยุทธ์การบริหารกลุ่มหลักทรัพย์ (P483)",type:"ความเข้าใจเนื้อหา",level:"-"}},
+      {q:"ข้อใดเป็นการลงทุนโดยใช้กลยุทธ์ Contrarian Strategy",choices:["ซื้อหุ้นที่ผันผวนในระยะที่ผ่านมา","ซื้อหุ้นที่ราคาปรับลดลงมากในระยะที่ผ่านมา","ซื้อหุ้นที่ราคาไม่ผันผวนในระยะที่ผ่านมา","ซื้อหุ้นที่ราคาปรับตัวสูงขึ้นมากในระยะที่ผ่านมา"],answer:1,explain:"Contrarian Strategy เป็นการลงทุนที่สวนทางการเคลื่อนไหวของตลาด เช่น Buy Loser Sell Winner Stock",ref:{source:"ชุดวิชาที่ 2 การวางแผนการลงทุน บทที่ 8 กลยุทธ์การบริหารกลุ่มหลักทรัพย์ (P443)",type:"ความเข้าใจเนื้อหา",level:"-"}},
+      {q:"จากการสังเกตในตลาดตราสารหนี้ นักลงทุนพบว่า มีพันธบัตรรัฐบาลสองรุ่นที่มีอายุคงเหลือเท่ากันคือ 5 ปี\nรุ่นที่ 1 มีอัตราดอกเบี้ยหน้าตัวเท่ากับร้อยละ 6 ต่อปี ให้ผลตอบแทนร้อยละ 5.0\nรุ่นที่ 2 มีอัตราดอกเบี้ยหน้าตัวเท่ากับร้อยละ 6 ต่อปี ให้ผลตอบแทนร้อยละ 5.1\nปัจจุบันนักลงทุนคนดังกล่าวถือพันธบัตรรุ่นที่ 1 อยู่จำนวน 100 ล้านบาท ท่านจะแนะนำให้เขาทำอย่างไร และวิธีการดังกล่าวเรียกว่าอะไร",choices:["ขายพันธบัตรรุ่นที่ 2 และซื้อรุ่นที่ 1 โดยวิธี Substitution Swap","ขายพันธบัตรรุ่นที่ 1 และซื้อรุ่นที่ 2 โดยวิธี Intermarket Spread Swap","ขายพันธบัตรรุ่นที่ 1 และซื้อรุ่นที่ 2 โดยวิธี Substitution Swap","ขายพันธบัตรรุ่นที่ 2 และซื้อรุ่นที่ 1 โดยวิธี Intermarket Spread Swap"],answer:2,explain:"พันธบัตรรัฐบาลรุ่นที่ 2 ผลตอบแทนดีกว่า โดยมีดูเรชั่นเท่ากัน จึงควรขายพันธบัตรรุ่นที่ 1 แล้วซื้อรุ่นที่ 2 วิธีการนี้เรียกว่า Substitution Swap",ref:{source:"ชุดวิชาที่ 2 การวางแผนการลงทุน บทที่ 8 กลยุทธ์การบริหารกลุ่มหลักทรัพย์ หน้า 489",type:"ความเข้าใจเนื้อหา",level:"-"}}
+    ]
+  },
+  {
+    name: "ชุดที่ 5 — จรรยาบรรณ",
+    pink: true,
+    questions: [
+      {q:"บริษัทหลักทรัพย์จะนำรายชื่อหลักทรัพย์เข้าบัญชีติดตามและเฝ้าระวัง (Watch List) เมื่อใด",choices:["เมื่อบริษัทผู้ออกหลักทรัพย์ศึกษาข้อมูลทางการเงินของบริษัทหลักทรัพย์","เมื่อบริษัทหลักทรัพย์ตกลงทำสัญญาจ้างบริษัทหลักทรัพย์เป็นที่ปรึกษาทางการเงินโดยยังไม่เปิดเผยเป็นการทั่วไป","เมื่อบริษัทผู้ออกหลักทรัพย์จ้างบริษัทหลักทรัพย์เป็นที่ปรึกษาและข้อมูลได้รับรู้ทางสื่อสาธารณะแล้ว","เมื่อสิ้นสุดสัญญาจ้างบริษัทหลักทรัพย์เป็นที่ปรึกษา"],answer:1},
+      {q:"ข้อใดไม่ใช่หน้าที่ของ Compliance",choices:["จัดอบรมความรู้ความเข้าใจระเบียบในการปฏิบัติงานให้พนักงาน","ตรวจสอบการทำงานให้พนักงานทำงานอย่างถูกต้องตามกฎเกณฑ์ปฏิบัติ","จัดอบรมต่ออายุใบอนุญาตผู้แนะนำการลงทุนให้กับพนักงานบริษัท","ออกกฎระเบียบในการปฏิบัติงานให้เป็นไปตามกฎเกณฑ์ของ ก.ล.ต. และตลาดหลักทรัพย์ฯ"],answer:2},
+      {q:"ตัวเลือกใดกล่าวไม่ถูกต้องเกี่ยวกับเกณฑ์ความพร้อมในกระบวนการขายและบริการในส่วนกระบวนการขายตราสารทุน",choices:["ผู้ประกอบการสามารถใช้พื้นที่ขายผลิตภัณฑ์ตลาดทุนร่วมกับการฝากเงินถอนเงินเพื่อความสะดวกของการใช้บริการของลูกค้า","ผู้ประกอบการจัดให้มีคู่มือเพื่อให้ผู้ขายเข้าใจถึงบทบาทหน้าที่ได้อย่างเหมาะสมและเพื่อประกอบการนำเสนอขายให้เหมาะสมกับลูกค้าแต่ละประเภท","หากไม่มีผู้ขายที่มีความรู้ความสามารถสอดคล้องกับผลิตภัณฑ์ที่เสนอขาย ผู้ประกอบการสามารถจัดให้มีระบบสนับสนุนเพิ่มเติมให้ลูกค้าได้","คู่มือการขายสามารถจัดทำในรูปแบบรูปเล่ม (hard copy) หรือรูปแบบอิเล็กทรอนิก (soft copy) แต่ต้องสามารถให้หน่วยงานทางการตรวจสอบได้โดยทันที"],answer:0},
+      {q:"ข้อกำหนดห้ามผู้แนะนำการลงทุนเก็บเอกสารยืนยันรายงานการเสนอขายหลักทรัพย์และรายงานการเปลี่ยนแปลงการถือครองหลักทรัพย์แทนลูกค้า เพื่อวัตถุประสงค์ใด",choices:["ป้องกันการปลอมแปลงเอกสารเพื่อการทุจริตและยักยอกทรัพย์สินลูกค้า","ลดงานด้านเอกสาร เพื่อให้ผู้แนะนำการลงทุนให้ความสำคัญกับการให้คำแนะนำ","ป้องกันข้อมูลการซื้อขายของลูกค้ารั่วไหล","ป้องกันข้อมูลลูกค้าสูญหาย"],answer:0},
+      {q:"ข้อใดไม่ถือว่าผิดจรรยาบรรณเรื่องการปฏิบัติหน้าที่หรือให้บริการด้วยความซื่อสัตย์สุจริต",choices:["นำเอกสารหลักฐานของลูกค้ารายอื่นมาเปิดบัญชีซื้อขายแทนลูกค้า","นำข้อมูลของลูกค้าไปใช้เพื่อเสนอขายประกันชีวิต","ให้คำแนะนำโดยใช้บทวิเคราะห์ของบริษัทหลักทรัพย์อื่น และได้แจ้งให้ลูกค้ารับทราบถึงแหล่งที่มา","เปิดบัญชีซื้อขายหลักทรัพย์โดยใช้ชื่อบุคคลอื่น"],answer:2},
+      {q:"วิธีการจ่ายค่าตอบแทนข้อใดถือว่าไม่เหมาะสม",choices:["จ่ายผลตอบแทนตามยอดขายที่ผู้ติดต่อนักลงทุนทำได้","จ่ายผลตอบแทนตามคุณภาพและระดับความยากง่ายของการให้บริการ","จ่ายผลตอบแทนโดยคำนึงถึงประโยชน์ของลูกค้าและการให้บริการเป็นหลัก","กำหนดอัตราจ่ายผลตอบแทนโดยระมัดระวังไม่ให้เกิด product-focused และนำไปสู่ mis-selling"],answer:0},
+      {q:"ข้อใดถือว่ามีความผิดฐาน Insider trading",choices:["นาย ก. เป็นผู้บริหารบริษัท ให้สัมภาษณ์นักข่าวว่าโรงงานจะมีกำลังการผลิตเพิ่มขึ้น 2 เท่าในไตรมาสนี้ แต่ความจริงเครื่องจักรจะติดตั้งล่าช้าไปถึง 3 เดือน","นาง ข. เป็นอดีตผู้ตรวจสอบบัญชีของบริษัท ทำการวิเคราะห์งบการเงินแล้วตัดสินใจสั่งซื้อหุ้นของบริษัทนั้น","นาย ค. กรรมการบริษัท ออกจากห้องประชุมแล้วทราบว่าบริษัทจะขาดทุน 1,000 ล้านบาท จึงมีคำสั่งขายหุ้นทันทีก่อนส่งรายงานการประชุมนี้ไปที่ตลาดหลักทรัพย์ฯ","นาย ง. สั่งขายหุ้นของบริษัท เนื่องจากบริษัทขาดทุน และได้รายงานข้อมูลผลการขาดทุนเข้าไปยังตลาดหลักทรัพย์แล้ว"],answer:2},
+      {q:"นางสาว ช ขอให้พี่ชายเปิดบัญชีซื้อขายหลักทรัพย์ และขอ Username Password เพื่อส่งคำสั่งซื้อขายหุ้น และเมื่อมีกำไรก็แบ่งกำไรส่วนหนึ่งให้พี่ชาย การกระทำของนางสาว ช ถือว่าผิดจรรยาบรรณในเรื่องใด",choices:["นำทรัพย์สินของบริษัทไปใช้โดยมิชอบ","ใช้ประโยชน์จากข้อมูลภายใน","แสวงหาผลประโยชน์ให้แก่ตนเองหรือบุคคลอื่น","นำข้อมูลของลูกค้าไปใช้โดยลูกค้าไม่อนุญาต"],answer:2},
+      {q:"แนวทางปฏิบัติในการขายและให้บริการด้านการซื้อขายหุ้น กรณีขายผลิตภัณฑ์ครั้งแรก ข้อมูลใดที่ผู้แนะนำการลงทุนควรให้ข้อมูลลูกค้า\nI. ขั้นตอนและวิธีการลงทุน\nII. ปัจจัยที่อาจมีผลต่ออัตราผลตอบแทน\nIII. ผลตอบแทนย้อนหลังของหุ้นเฉพาะที่มีกำไรเพื่อให้ลูกค้าเห็นถึงการบรรลุเป้าหมาย",choices:["I เท่านั้น","I และ II","II และ III","I, II และ III"],answer:1},
+      {q:"นาย C ได้รับมอบหมายเป็นผู้แนะนำการลงทุนให้ นาย A ก่อนที่นาย C จะวิเคราะห์ข้อมูลการลงทุน สอบถามวัตถุประสงค์ และความเสี่ยงของนาย A นาย C ได้เสนอขายหุ้น IPO ของ บมจ. XYZ ที่บริษัทเป็นที่ปรึกษาทางการเงินและผู้จัดการการจัดจำหน่าย จำนวน 500,000 หุ้น ราคา 2.50 บาท ซึ่งนาย A ยอมรับการจัดสรรทั้งหมด การให้คำแนะนำของนาย C เหมาะสมหรือไม่",choices:["ไม่เหมาะสม เพราะนาย C ควรจัดสรรให้ผู้ลงทุนที่ลงทุนก่อนนาย A","ไม่เหมาะสม เพราะนาย C ควรศึกษาและเข้าใจข้อมูลพื้นฐานของนาย A ก่อนการจัดสรร","เหมาะสม เพราะ XYZ เป็นหุ้นที่มีปัจจัยพื้นฐานดี น่าจะจ่ายเงินปันผลได้สม่ำเสมอ","เหมาะสม เพราะขึ้นอยู่กับดุลพินิจของผู้แนะนำการลงทุน"],answer:1},
+      {q:"ผู้แนะนำการลงทุน นายบี ซึ่งบริษัทหลักทรัพย์อยู่ระหว่างทำหน้าที่เป็นที่ปรึกษาทางการเงินและผู้จัดการการจัดจำหน่าย จัดสรรหุ้น IPO บมจ. XYZ จำนวน 200,000 หุ้น ราคา 3 บาทต่อหุ้น ให้นายซี ข้อใดที่นายบีไม่ต้องเปิดเผยให้นายซีทราบ",choices:["บริษัทนายจ้างของนายบีเป็นบริษัทที่เป็นที่ปรึกษาทางการเงินให้ บมจ. XYZ","บริษัทนายจ้างของนายบีเป็นผู้จัดการการจัดจำหน่ายให้ บมจ. XYZ","ญาติสนิทของนายบีทำงานที่ฝ่ายการตลาดของ บมจ. XYZ","นายบีได้ค่าธรรมเนียมพิเศษหากขายหุ้น IPO บริษัท XYZ ให้นายซีและนักลงทุนรายอื่นๆ"],answer:2},
+      {q:"หากนักลงทุนต้องการสภาพคล่อง ควรลงทุนในหลักทรัพย์ข้อใด",choices:["ตั๋วเงินคลัง หุ้นกู้แปลงสภาพ","ตั๋วเงินคลัง ตั๋วสัญญาใช้เงิน","หุ้นกู้แปลงสภาพ พันธบัตรรัฐบาล","ตั๋วเงินคลัง พันธบัตรรัฐบาล"],answer:1},
+      {q:"การแบ่งประเภทสินทรัพย์ตามชั้นสินทรัพย์ (Asset Class) ข้อใดแตกต่างกันทั้งหมด",choices:["เงินฝากออมทรัพย์, พันธบัตร, หุ้นกู้","หุ้นกู้, หุ้นบุริมสิทธิ, หุ้นสามัญ","หุ้นกู้, หุ้นบุริมสิทธิ, สัญญาซื้อขายล่วงหน้า","พันธบัตร, หุ้นกู้, สัญญาซื้อขายล่วงหน้า"],answer:2},
+      {q:"ข้อใดต่อไปนี้อธิบายถึงปัจจัยที่มีผลกระทบต่อการกระจายสินทรัพย์ในการลงทุนได้อย่างถูกต้อง\nI. เมื่ออายุสูงขึ้นนักลงทุนมีแนวโน้มที่จะลงทุนในสินทรัพย์ทางการเงินที่มีอัตราผลตอบแทนต่ำ\nII. การตัดสินใจลงทุนในระยะสั้นหรือยาวมีความสัมพันธ์อย่างใกล้ชิดกับความต้องการสภาพคล่อง\nIII. ในการกำหนดแผนการกระจายสินทรัพย์ นักลงทุนจะคำนึงถึงความแตกต่างของต้นทุนและอัตราภาษีของผลตอบแทนจากการลงทุนในสินทรัพย์แต่ละประเภท",choices:["I และ II เท่านั้น","I และ III เท่านั้น","II และ III เท่านั้น","I, II และ III"],answer:0},
+      {q:"ข้อความใดต่อไปนี้ไม่ถูกต้องเกี่ยวกับการให้คำแนะนำที่เหมาะสมกับลูกค้า",choices:["คำแนะนำทั่วไปเป็นคำแนะนำที่มิได้คำนึงถึงความต้องการของผู้ได้รับคำแนะนำ","คำแนะนำเฉพาะเจาะจงเป็นคำแนะนำเฉพาะหลักทรัพย์ใดหลักทรัพย์หนึ่ง","คำแนะนำทั่วไปเป็นคำแนะนำที่มิได้คำนึงถึงฐานะการเงินของผู้ได้รับคำแนะนำ","คำแนะนำเฉพาะเจาะจงเป็นคำแนะนำเฉพาะบุคคล ซึ่งไม่จำเป็นต้องเป็นไปในแนวทางที่นักลงทุนคนอื่นสนใจ"],answer:1},
+      {q:"ข้อใดเป็นคำจำกัดความของการลงทุนแบบ Capital Protection",choices:["ลงทุนในสินทรัพย์ที่มีความเสี่ยงค่อนข้างสูง เพราะให้ความสำคัญกับการทำกำไรเป็นหลัก","จำกัดการลงทุนอยู่ในส่วนของตราสารหนี้ที่มีการจ่ายดอกเบี้ยเป็นส่วนมาก เพราะต้องการรายได้ประจำ","ลงทุนในตราสารหนี้ที่มีความเสี่ยงต่ำ แม้ผลตอบแทนจะไม่สูงมากเพราะต้องการความมั่นคงปลอดภัยสูง","เลือกลงทุนผสมระหว่างหลักทรัพย์ที่ทำกำไร หลักทรัพย์ที่ให้รายได้ประจำ และหลักทรัพย์ที่มีความเสี่ยงต่ำ"],answer:2},
+      {q:"นางสาว A อายุ 30 ปี มีเงินเดือนสูง มีมรดก มีความมั่งคั่ง ไม่มีหนี้สิน แต่นำเงินไปฝากไว้ในบัญชีออมทรัพย์ทั้งหมด แสดงว่านางสาว A รับความเสี่ยงเป็นอย่างไร",choices:["ความสามารถรับความเสี่ยงสูง แต่การเต็มใจรับความเสี่ยงต่ำ","ความสามารถรับความเสี่ยงสูง แต่การเต็มใจรับความเสี่ยงสูง","ความสามารถรับความเสี่ยงต่ำ แต่การเต็มใจรับความเสี่ยงต่ำ","ความสามารถรับความเสี่ยงต่ำ แต่การเต็มใจรับความเสี่ยงสูง"],answer:0},
+      {q:"จงเรียงลำดับผู้ลงทุนจากผู้ที่มีระดับความทนทานต่อความเสี่ยง (Risk Tolerance Level) จากมากไปน้อย\nI. นาย A จัดสรรเงินลงทุนในหุ้นของบริษัทที่กำลังเติบโต 80% พันธบัตร 10% สินทรัพย์ใกล้เคียงเงินสด 10%\nII. นาย B จัดสรรเงินลงทุนในหุ้นของบริษัทมั่นคง 85% หุ้นกู้ 10% สินทรัพย์ใกล้เคียงเงินสด 5%\nIII. นาย C จัดสรรเงินลงทุนในหุ้นของบริษัทมั่นคง 50% หุ้นกู้ 40% สินทรัพย์ใกล้เคียงเงินสด 10%",choices:["I, II, III","I, III, II","II, III, I","III, II, I"],answer:0}
+    ]
+  }
+];
+
+// ===== STATE =====
+let curSet = 0;
+let curQ = 0;
+let userAnswers = [];
+let shuffledOrders = [];
+let totalQ = 0;
+let timerInt = null;
+let timeLeft = 0;
+let isTimed = false;
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function goHome(){
+  clearInterval(timerInt);
+  showScreen('home-screen');
+  updateMockCountdown();
+}
+
+function fmtTime(s){
+  var m = Math.floor(s/60);
+  var sec = s%60;
+  return (m<10?'0':'')+m+':'+(sec<10?'0':'')+sec;
+}
+
+function tickTimer(){
+  timeLeft--;
+  document.getElementById('timer-val').textContent = fmtTime(timeLeft);
+  if(timeLeft <= 60) document.getElementById('timer-box').classList.add('urgent');
+  if(timeLeft <= 0){
+    clearInterval(timerInt);
+    showResult();
+  }
+}
+
+function startTimer(totalSecs){
+  timeLeft = totalSecs;
+  document.getElementById('timer-val').textContent = fmtTime(timeLeft);
+  document.getElementById('timer-box').classList.remove('urgent');
+  document.getElementById('timer-box').style.display = '';
+  clearInterval(timerInt);
+  timerInt = setInterval(tickTimer, 1000);
+}
+
+// ===== RENDER HOME =====
+function renderHome(){
+  const list = document.getElementById('set-list');
+  list.innerHTML = '';
+  SETS.forEach((set, i) => {
+    const d = document.createElement('div');
+    d.className = 'quiz-set-card';
+    if(set.pink) d.style.background = 'var(--pink)';
+    d.onclick = () => startQuiz(i);
+    const badgeColor = 'rgb(237,255,40)';
+    d.innerHTML = `
+      <div class="qsc-label">${set.name}</div>
+      <div class="qsc-meta">${set.totalQuestions || set.questions.length} ข้อ · สลับตัวเลือกทุกรอบ</div>
+      <div class="qsc-badge" style="background:${badgeColor};color:var(--black)">เริ่มทำข้อสอบ →</div>
+      <div class="qsc-arrow">›</div>`;
+    list.appendChild(d);
+
+    // Insert answer card after set 1 (index 0)
+    if(i === 0){
+      const a = document.createElement('div');
+      a.className = 'quiz-set-card';
+      a.onclick = () => startAnswerReview(0);
+      a.innerHTML = `
+        <div class="qsc-label">เฉลยชุดที่ 1</div>
+        <div class="qsc-meta">${set.questions.length} ข้อ · พร้อมคำอธิบาย</div>
+        <div class="qsc-badge" style="background:var(--green);color:var(--black)">ดูเฉลย →</div>
+        <div class="qsc-arrow">›</div>`;
+      list.appendChild(a);
+    }
+  });
+}
+
+// ===== ANSWER REVIEW =====
+let ansSetIdx = 0;
+let ansCurQ = 0;
+
+function startAnswerReview(setIdx){
+  ansSetIdx = setIdx;
+  ansCurQ = 0;
+  const set = SETS[setIdx];
+  document.getElementById('ans-set-title').textContent = 'เฉลย' + set.name;
+  document.getElementById('ans-set-sub').textContent = set.questions.length + ' ข้อ · พร้อมคำอธิบาย';
+  showScreen('answer-screen');
+  renderAnswerQ();
+}
+
+function renderAnswerQ(){
+  const qs = SETS[ansSetIdx].questions;
+  const q = qs[ansCurQ];
+  const total = qs.length;
+
+  document.getElementById('ans-progress-bar').style.width = ((ansCurQ+1)/total*100) + '%';
+  document.getElementById('ans-btn-prev').style.display = ansCurQ === 0 ? 'none' : '';
+  document.getElementById('ans-btn-next').textContent = ansCurQ === total-1 ? '— จบแล้ว —' : 'ถัดไป →';
+  document.getElementById('ans-btn-next').disabled = ansCurQ === total-1;
+
+  const body = document.getElementById('ans-body');
+  body.innerHTML = '';
+
+  // Question text — split on [TABLE] if present
+  const qWrap = document.createElement('div');
+  qWrap.className = 'q-text-wrap';
+  const qParts = q.q.split('[TABLE]');
+  qWrap.innerHTML = `<div class="q-number-badge">${ansCurQ+1}</div><div class="q-text">${qParts[0].replace(/\n/g,'<br>')}</div>`;
+  body.appendChild(qWrap);
+  if(q.table){
+    const tWrap = document.createElement('div');
+    tWrap.style.cssText = 'width:100%;padding:0 14px;';
+    tWrap.appendChild(buildTable(q.table));
+    body.appendChild(tWrap);
+  }
+  if(qParts[1]){
+    const qWrap2 = document.createElement('div');
+    qWrap2.style.cssText = 'width:100%;padding:6px 18px 2px;font-family:"Sarabun",sans-serif;font-size:.9rem;line-height:1.7;color:var(--black);';
+    qWrap2.innerHTML = qParts[1].replace(/\n/g,'<br>');
+    body.appendChild(qWrap2);
+  }
+
+  // Choices — show correct highlighted, others neutral
+  const choicesDiv = document.createElement('div');
+  choicesDiv.className = 'choices-list';
+  q.choices.forEach((c, idx) => {
+    const btn = document.createElement('div');
+    const isCorrect = idx === q.answer;
+    btn.style.cssText = `
+      width:100%;background:${isCorrect ? 'rgba(51,223,147,.15)' : '#fff'};
+      border:2px solid ${isCorrect ? 'var(--green)' : 'var(--border)'};
+      border-radius:13px;padding:13px 16px;
+      font-family:'Sarabun',sans-serif;font-size:.88rem;
+      display:flex;align-items:flex-start;gap:10px;line-height:1.6;color:var(--black);
+    `;
+    const numSpan = document.createElement('span');
+    numSpan.style.cssText = `flex-shrink:0;width:24px;height:24px;border-radius:7px;
+      background:${isCorrect ? 'var(--green)' : '#f0f0e8'};
+      font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px;`;
+    numSpan.textContent = idx+1;
+    const txt = document.createElement('span');
+    txt.textContent = c;
+    if(isCorrect) txt.style.fontWeight = '700';
+    btn.appendChild(numSpan);
+    btn.appendChild(txt);
+    choicesDiv.appendChild(btn);
+  });
+  body.appendChild(choicesDiv);
+
+  // Explanation box
+  if(q.explain){
+    const exBox = document.createElement('div');
+    exBox.style.cssText = `background:rgba(51,223,147,.12);border:1px solid rgba(51,223,147,.5);
+      border-radius:13px;padding:16px;font-family:'Sarabun',sans-serif;font-size:.87rem;line-height:1.85;color:#004d30;`;
+    exBox.innerHTML = '<div style="font-weight:800;font-size:.75rem;letter-spacing:.5px;margin-bottom:8px;font-family:\'Prompt\',sans-serif">💡 คำอธิบาย</div>' + q.explain.replace(/\n/g,'<br>');
+    body.appendChild(exBox);
+  }
+
+  // Reference box
+  const ref = q.ref || {};
+  const refBox = document.createElement('div');
+  refBox.style.cssText = `border:1px solid var(--border);border-radius:11px;padding:11px 14px;
+    font-family:'Sarabun',sans-serif;font-size:.76rem;line-height:1.75;color:var(--muted);`;
+  refBox.innerHTML = `
+    <div style="font-weight:700;font-size:.68rem;letter-spacing:.6px;margin-bottom:5px;font-family:'Prompt',sans-serif;color:#aaa">📎 อ้างอิง</div>
+    <div><span style="color:#bbb">อ้างอิง :</span> ${ref.source || '—'}</div>
+    <div><span style="color:#bbb">ลักษณะ :</span> ${ref.type || '—'}</div>
+    <div><span style="color:#bbb">ระดับ :</span> ${ref.level || '—'}</div>
+  `;
+  body.appendChild(refBox);
+}
+
+function ansNav(dir){
+  const total = SETS[ansSetIdx].questions.length;
+  ansCurQ = Math.max(0, Math.min(total-1, ansCurQ+dir));
+  renderAnswerQ();
+}
+
+function openAnsGrid(){
+  const qs = SETS[ansSetIdx].questions;
+  const grid = document.getElementById('ans-grid');
+  grid.innerHTML = '';
+  qs.forEach((q, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'q-cell' + (i === ansCurQ ? ' current' : '');
+    cell.textContent = i+1;
+    cell.onclick = () => { ansCurQ = i; closeAnsGrid(); renderAnswerQ(); };
+    grid.appendChild(cell);
+  });
+  document.getElementById('ans-grid-modal').classList.add('open');
+}
+function closeAnsGrid(){ document.getElementById('ans-grid-modal').classList.remove('open'); }
+
+// ===== SHUFFLE helper =====
+function shuffleArray(arr){
+  const a = [...arr];
+  for(let i = a.length-1; i > 0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+// ===== START QUIZ =====
+function startQuiz(setIdx){
+  clearInterval(timerInt);
+  curSet = setIdx;
+  curQ = 0;
+  const set = SETS[setIdx];
+  isTimed = !!set.timed;
+
+  // For set 4: get shuffled combined questions
+  const qs = set.questions;
+  totalQ = qs.length;
+  userAnswers = new Array(totalQ).fill(null);
+
+  // Store resolved questions for timed set (getter returns new array each call)
+  if(isTimed) SETS[setIdx]._resolved = qs;
+
+  shuffledOrders = qs.map(q =>
+    shuffleArray(q.choices.map((_,i)=>i))
+  );
+
+  document.getElementById('quiz-set-title').textContent = set.name;
+  document.getElementById('quiz-set-sub').textContent = totalQ + ' ข้อ · เฉลยหลังทำครบ';
+
+  // Timer
+  if(isTimed){
+    startTimer(totalQ * 100);
+  } else {
+    clearInterval(timerInt);
+    document.getElementById('timer-box').style.display = 'none';
+  }
+
+  showScreen('quiz-screen');
+  renderQuestion();
+}
+
+// ===== RENDER QUESTION =====
+function getQuestions(){
+  const set = SETS[curSet];
+  return set._resolved || set.questions;
+}
+
+function renderGrid(){
+  const grid = document.getElementById('q-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  for(let i = 0; i < totalQ; i++){
+    const cell = document.createElement('div');
+    cell.className = 'q-cell' +
+      (userAnswers[i] !== null ? ' answered' : '') +
+      (i === curQ ? ' current' : '');
+    cell.textContent = i + 1;
+    cell.onclick = (function(idx){ return function(){
+      curQ = idx;
+      closeGridModal();
+      renderQuestion();
+    }; })(i);
+    grid.appendChild(cell);
+  }
+}
+function openGridModal(){ renderGrid(); document.getElementById('grid-modal').classList.add('open'); }
+function closeGridModal(){ document.getElementById('grid-modal').classList.remove('open'); }
+function closeGridModalOuter(e){ if(e.target===document.getElementById('grid-modal')) closeGridModal(); }
+
+// ===== TABLE HELPER =====
+function buildTable(tbl){
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'margin:10px 0 4px;border-radius:10px;border:1px solid var(--border);overflow:hidden';
+  const t = document.createElement('table');
+  t.style.cssText = 'width:100%;border-collapse:collapse;font-family:"Sarabun",sans-serif;font-size:.75rem;table-layout:fixed;';
+  // header
+  const thead = document.createElement('thead');
+  const hr = document.createElement('tr');
+  tbl.headers.forEach(h => {
+    const th = document.createElement('th');
+    th.textContent = h;
+    th.style.cssText = 'background:var(--blue);color:#fff;padding:6px 4px;text-align:center;font-family:"Prompt",sans-serif;font-size:.62rem;font-weight:700;word-break:keep-all;white-space:normal;line-height:1.3;';
+    hr.appendChild(th);
+  });
+  thead.appendChild(hr);
+  t.appendChild(thead);
+  // body
+  const tbody = document.createElement('tbody');
+  tbl.rows.forEach((row, ri) => {
+    const tr = document.createElement('tr');
+    const isSummary = ri >= tbl.rows.length - 2;
+    tr.style.background = isSummary ? 'rgba(51,223,147,.1)' : (ri%2===0?'#fff':'#f8f8f5');
+    row.forEach(cell => {
+      const td = document.createElement('td');
+      td.textContent = cell;
+      td.style.cssText = `padding:5px 4px;text-align:center;border-top:1px solid var(--border);font-size:.74rem;${isSummary?'font-weight:700;':''}`;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  t.appendChild(tbody);
+  wrap.appendChild(t);
+  return wrap;
+}
+
+function renderQuestion(){
+  const qs = getQuestions();
+  const q = qs[curQ];
+  const order = shuffledOrders[curQ];
+
+  // Counter — show answered/total
+  const answeredCount = userAnswers.filter(a => a !== null).length;
+  const allAnswered = answeredCount === totalQ;
+  document.getElementById('q-counter-val').textContent = allAnswered ? 'ส่งคำตอบ' : `${answeredCount}/${totalQ}`;
+  document.getElementById('q-counter-lbl').textContent = allAnswered ? '' : 'ตอบแล้ว';
+  document.getElementById('q-counter').style.background = allAnswered ? 'var(--green)' : 'var(--yellow)';
+  document.getElementById('q-counter').style.cursor = allAnswered ? 'pointer' : 'default';
+  document.getElementById('q-counter').onclick = allAnswered ? showResult : null;
+
+  // Progress
+  document.getElementById('progress-bar').style.width = ((answeredCount)/totalQ*100) + '%';
+
+  // Prev button
+  document.getElementById('btn-prev').style.display = curQ === 0 ? 'none' : '';
+
+  // Next button — always navigate, submit via counter badge
+  const btnNext = document.getElementById('btn-next');
+  btnNext.className = 'btn-next';
+  btnNext.textContent = 'ถัดไป →';
+  btnNext.onclick = nextQ;
+
+  // Body
+  const body = document.getElementById('quiz-body');
+  body.innerHTML = '';
+
+  // Question text — split on [TABLE] if present
+  const qWrap = document.createElement('div');
+  qWrap.className = 'q-text-wrap';
+  const qParts = q.q.split('[TABLE]');
+  qWrap.innerHTML = `<div class="q-number-badge">${curQ+1}</div><div class="q-text">${qParts[0].replace(/\n/g,'<br>')}</div>`;
+  body.appendChild(qWrap);
+  if(q.table){
+    const tWrap = document.createElement('div');
+    tWrap.style.cssText = 'width:100%;padding:0 14px;';
+    tWrap.appendChild(buildTable(q.table));
+    body.appendChild(tWrap);
+  }
+  if(qParts[1]){
+    const qWrap2 = document.createElement('div');
+    qWrap2.style.cssText = 'width:100%;padding:6px 18px 2px;font-family:"Sarabun",sans-serif;font-size:.9rem;line-height:1.7;color:var(--black);';
+    qWrap2.innerHTML = qParts[1].replace(/\n/g,'<br>');
+    body.appendChild(qWrap2);
+  }
+
+  // Choices
+  const choicesDiv = document.createElement('div');
+  choicesDiv.className = 'choices-list';
+
+  order.forEach((origIdx, displayPos) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn' + (userAnswers[curQ] === displayPos ? ' selected' : '');
+    btn.innerHTML = `<span class="choice-num">${displayPos+1}</span><span>${q.choices[origIdx]}</span>`;
+    btn.onclick = () => selectChoice(displayPos);
+    choicesDiv.appendChild(btn);
+  });
+
+  body.appendChild(choicesDiv);
+}
+
+function selectChoice(displayPos){
+  userAnswers[curQ] = displayPos;
+  renderQuestion();
+}
+
+function prevQ(){
+  if(curQ > 0){ curQ--; renderQuestion(); }
+}
+
+function nextQ(){
+  if(curQ < totalQ - 1){
+    curQ++;
+    renderQuestion();
+  }
+}
+
+function confirmBackToHome(){
+  clearInterval(timerInt);
+  goHome();
+}
+
+// ===== RESULT =====
+function showResult(){
+  clearInterval(timerInt);
+  const qs = getQuestions();
+  let correct = 0;
+
+  qs.forEach((q, i) => {
+    const order = shuffledOrders[i];
+    const userDisplayPos = userAnswers[i];
+    if(userDisplayPos !== null){
+      const userOrigIdx = order[userDisplayPos];
+      if(userOrigIdx === q.answer) correct++;
+    }
+  });
+
+  const total = totalQ;
+  const pct = Math.round(correct/total*100);
+
+  const ratio = correct/total;
+  let emoji, heading, bg;
+  if(ratio === 1){emoji='🏆';heading='สมบูรณ์แบบ!';bg='rgba(51,223,147,.22)'}
+  else if(ratio >= .8){emoji='😊';heading='ทำได้ดีมาก!';bg='rgba(226,255,30,.3)'}
+  else if(ratio >= .6){emoji='😅';heading='พยายามต่อไป!';bg='rgba(5,73,254,.08)'}
+  else{emoji='😓';heading='ต้องฝึกอีกหน่อย!';bg='rgba(255,83,255,.1)'}
+
+  document.getElementById('result-emoji').textContent = emoji;
+  document.getElementById('result-heading').textContent = heading;
+  document.getElementById('result-sublabel').textContent = SETS[curSet].name;
+  document.getElementById('result-hdr').style.background = bg;
+  document.getElementById('r-score').textContent = Math.round(correct/total*100) + '/100';
+  document.getElementById('r-correct').textContent = correct + '/' + total;
+  document.getElementById('r-pct').textContent = pct + '%';
+
+  buildReview();
+  showScreen('result-screen');
+  if(ratio === 1) spawnConfetti();
+}
+
+function buildReview(){
+  const qs = getQuestions();
+  const list = document.getElementById('review-list');
+  list.innerHTML = '';
+
+  qs.forEach((q, i) => {
+    const order = shuffledOrders[i];
+    const userDisplayPos = userAnswers[i];
+    const unanswered = userDisplayPos === null;
+    const userOrigIdx = unanswered ? null : order[userDisplayPos];
+    const isOk = !unanswered && userOrigIdx === q.answer;
+    const correctDisplayPos = order.indexOf(q.answer);
+
+    const item = document.createElement('div');
+    item.className = 'rv-item';
+    item.onclick = () => openDetail(i);
+
+    const numDiv = document.createElement('div');
+    numDiv.className = 'rv-num ' + (isOk ? 'ok' : 'no');
+    numDiv.textContent = i+1;
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'rv-content';
+
+    const qtext = document.createElement('div');
+    qtext.className = 'rv-qtext';
+    qtext.textContent = q.q;
+
+    const ansDiv = document.createElement('div');
+    ansDiv.className = 'rv-answer ' + (isOk ? 'ok' : 'no');
+    if(unanswered){
+      ansDiv.textContent = '— ไม่ได้ตอบ (เฉลย: ข้อ ' + (correctDisplayPos+1) + ')';
+    } else if(isOk){
+      ansDiv.textContent = '✓ ข้อ ' + (userDisplayPos+1) + ' — ถูกต้อง';
+    } else {
+      ansDiv.textContent = '✗ ตอบข้อ ' + (userDisplayPos+1) + ' → เฉลย: ข้อ ' + (correctDisplayPos+1);
+    }
+
+    contentDiv.appendChild(qtext);
+    contentDiv.appendChild(ansDiv);
+
+    const tapHint = document.createElement('div');
+    tapHint.className = 'rv-tap';
+    tapHint.textContent = 'ดูโจทย์ ›';
+
+    item.appendChild(numDiv);
+    item.appendChild(contentDiv);
+    item.appendChild(tapHint);
+    list.appendChild(item);
+  });
+}
+
+// ===== DETAIL MODAL =====
+function openDetail(qIdx){
+  const qs = getQuestions();
+  const q = qs[qIdx];
+  const order = shuffledOrders[qIdx];
+  const userDisplayPos = userAnswers[qIdx];
+  const userOrigIdx = userDisplayPos !== null ? order[userDisplayPos] : null;
+  const correctDisplayPos = order.indexOf(q.answer);
+
+  document.getElementById('modal-q-num').textContent = 'ข้อที่ ' + (qIdx+1);
+  document.getElementById('modal-q-text').innerHTML = q.q.replace(/\n/g, '<br>');
+
+  const mc = document.getElementById('modal-choices');
+  mc.innerHTML = '';
+
+  order.forEach((origIdx, displayPos) => {
+    const div = document.createElement('div');
+    const isCorrect = origIdx === q.answer;
+    const isUserPick = displayPos === userDisplayPos;
+
+    let cls = 'modal-choice ';
+    if(isCorrect) cls += 'correct';
+    else if(isUserPick && !isCorrect) cls += 'wrong';
+    else cls += 'neutral';
+
+    div.className = cls;
+    div.innerHTML = `<span class="mc-num">${displayPos+1}</span><span>${q.choices[origIdx]}</span>`;
+    mc.appendChild(div);
+  });
+
+  // Explanation (if provided)
+  const exBox = document.getElementById('modal-explain');
+  if(q.explain){
+    exBox.style.display = '';
+    exBox.innerHTML = '<div style="font-weight:700;font-size:.72rem;letter-spacing:.5px;margin-bottom:6px;font-family:\'Prompt\',sans-serif">💡 คำอธิบาย</div>' + q.explain.replace(/\n/g, '<br>');
+  } else {
+    exBox.style.display = 'none';
+  }
+
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function closeModal(){
+  document.getElementById('detail-modal').classList.remove('open');
+}
+function closeModalOuter(e){
+  if(e.target === document.getElementById('detail-modal')) closeModal();
+}
+
+function retryQuiz(){
+  startQuiz(curSet);
+}
+
+// ===== CONFETTI =====
+function spawnConfetti(){
+  const w=document.createElement('div');w.className='confetti-wrap';document.body.appendChild(w);
+  const cols=['#0549FE','#33DF93','#FF53FF','rgb(237,255,40)','#1a1a1a'];
+  for(let i=0;i<60;i++){const d=document.createElement('div');d.className='confetti-dot';
+    d.style.left=Math.random()*100+'vw';d.style.background=cols[Math.floor(Math.random()*cols.length)];
+    d.style.animationDuration=(1.5+Math.random()*2)+'s';d.style.animationDelay=Math.random()*.8+'s';
+    const s=(6+Math.random()*8)+'px';d.style.width=d.style.height=s;w.appendChild(d);}
+  setTimeout(()=>w.remove(),3500);
+}
+
+function goToComingSoon(){ showScreen('coming-soon-screen'); }
+function goToPlanner(){
+  if(!localStorage.getItem(PLANNER_START_KEY))
+    localStorage.setItem(PLANNER_START_KEY, new Date().toISOString().split('T')[0]);
+  renderPlanner();
+  showScreen('planner-screen');
+}
+
+// ===== PLANNER =====
+const PLANNER_HRS_KEY = 'cfp_planner_hrs';
+const PLANNER_START_KEY = 'cfp_planner_start';
+const PLANNER_EXTRA_KEY = 'cfp_planner_extra'; // 'yes'|'no'
+const PLANNER_CHK_KEY = 'cfp_planner_chk'; // JSON {cfp1,cfp2}
+const PLANNER_BUSY_KEY = 'cfp_planner_busy';
+const ETHICS_LESSONS = 3;
+const CFP1_LESSONS = 8;
+const CFP2_CONTENT_LESSONS = 9;
+
+function changeBusyDays(delta){
+  var data = getCountdownData();
+  var maxDays = data ? Math.max(0, data.days) : 999;
+  var current = parseInt(localStorage.getItem(PLANNER_BUSY_KEY) || '0');
+  var next = Math.max(0, Math.min(maxDays, current + delta));
+  localStorage.setItem(PLANNER_BUSY_KEY, next);
+  renderPlanner();
+}
+
+function setExtra(yes){
+  localStorage.setItem(PLANNER_EXTRA_KEY, yes ? 'yes' : 'no');
+  renderPlanner();
+}
+
+function savePlannerHrs(){
+  var val = document.getElementById('pl-hrs-select').value;
+  localStorage.setItem(PLANNER_HRS_KEY, val);
+  if(!localStorage.getItem(PLANNER_START_KEY))
+    localStorage.setItem(PLANNER_START_KEY, new Date().toISOString().split('T')[0]);
+  // save checkboxes
+  var chk1 = document.getElementById('chk-cfp1');
+  var chk2 = document.getElementById('chk-cfp2');
+  if(chk1 && chk2)
+    localStorage.setItem(PLANNER_CHK_KEY, JSON.stringify({cfp1: chk1.checked, cfp2: chk2.checked}));
+  renderPlanner();
+}
+
+function renderPlanner(){
+  var data = getCountdownData();
+  var hrsPerDay = parseFloat(localStorage.getItem(PLANNER_HRS_KEY) || '2');
+  var startStr = localStorage.getItem(PLANNER_START_KEY);
+  var extraMode = localStorage.getItem(PLANNER_EXTRA_KEY) || 'no';
+  var chkData = JSON.parse(localStorage.getItem(PLANNER_CHK_KEY) || '{"cfp1":false,"cfp2":false}');
+
+  // Restore select
+  var sel = document.getElementById('pl-hrs-select');
+  if(sel) sel.value = hrsPerDay;
+
+  // Restore toggle buttons
+  var btnYes = document.getElementById('pl-extra-yes');
+  var btnNo = document.getElementById('pl-extra-no');
+  if(btnYes && btnNo){
+    btnYes.className = 'pl-toggle-btn' + (extraMode==='yes' ? ' active' : '');
+    btnNo.className = 'pl-toggle-btn' + (extraMode==='no' ? ' active' : '');
+  }
+
+  // Show/hide extra options
+  var extraOpts = document.getElementById('pl-extra-options');
+  if(extraOpts) extraOpts.style.display = extraMode==='yes' ? 'flex' : 'none';
+
+  // Restore checkboxes
+  var chk1 = document.getElementById('chk-cfp1');
+  var chk2 = document.getElementById('chk-cfp2');
+  if(chk1) chk1.checked = chkData.cfp1;
+  if(chk2) chk2.checked = chkData.cfp2;
+
+  // Calculate total lessons
+  var totalLessons = ETHICS_LESSONS;
+  if(extraMode === 'yes'){
+    if(chkData.cfp1) totalLessons += CFP1_LESSONS;
+    if(chkData.cfp2) totalLessons += CFP2_CONTENT_LESSONS;
+  }
+
+  // No date state
+  var noDate = document.getElementById('pl-no-date');
+  var daysCard = document.getElementById('pl-days-card');
+  if(!data){
+    noDate.style.display = '';
+    daysCard.style.opacity = '.4';
+    document.getElementById('pl-days-val').textContent = '—';
+    document.getElementById('pl-total-hrs-clock').textContent = '—';
+    document.getElementById('pl-real-hrs').textContent = '— ชั่วโมง';
+    document.getElementById('pl-lesson-list').innerHTML = '';
+    document.getElementById('pl-progress-fill').style.width = '0%';
+    document.getElementById('pl-used-label').textContent = 'ใช้ไป — ชั่วโมง';
+    document.getElementById('pl-pct-label').textContent = '—%';
+    return;
+  }
+  noDate.style.display = 'none';
+  daysCard.style.opacity = '1';
+
+  var busyDays = parseInt(localStorage.getItem(PLANNER_BUSY_KEY) || '0');
+  busyDays = Math.min(busyDays, Math.max(0, data.days)); // cap at available days
+
+  // Restore busy days UI
+  var busyVal = document.getElementById('pl-busy-val');
+  var busyNote = document.getElementById('pl-busy-note');
+  if(busyVal) busyVal.textContent = busyDays;
+  if(busyNote) busyNote.style.display = busyDays > 0 ? '' : 'none';
+
+  var days = Math.max(0, data.days);
+  var effectiveDays = Math.max(0, days - busyDays);
+  var totalClockHrs = days * 24;
+  var realHrs = effectiveDays * hrsPerDay;
+  var perLesson = totalLessons > 0 ? realHrs / totalLessons : 0;
+
+  document.getElementById('pl-days-val').textContent = days + ' วัน' + (busyDays > 0 ? ' (ว่าง ' + effectiveDays + ' วัน)' : '');
+  document.getElementById('pl-total-hrs-clock').textContent = totalClockHrs.toLocaleString() + ' ชั่วโมง';
+  document.getElementById('pl-real-hrs').textContent = realHrs.toFixed(1) + ' ชั่วโมง';
+
+  // Lesson breakdown label
+  var lblEl = document.getElementById('pl-lesson-label');
+  if(lblEl) lblEl.textContent = 'เฉลี่ยต่อบทเรียน (' + totalLessons + ' บท)';
+
+  // Lesson rows
+  var ll = document.getElementById('pl-lesson-list');
+  ll.innerHTML = '';
+  var groups = [{ label: 'จรรยาบรรณ CFP2 (3 บท)', count: ETHICS_LESSONS }];
+  if(extraMode==='yes' && chkData.cfp1) groups.push({ label: 'CFP ชุดวิชาที่ 1 (8 บท)', count: CFP1_LESSONS });
+  if(extraMode==='yes' && chkData.cfp2) groups.push({ label: 'CFP ชุดวิชาที่ 2 เนื้อหา (9 บท)', count: CFP2_CONTENT_LESSONS });
+
+  // Summary line
+  var summaryRow = document.createElement('div');
+  summaryRow.style.cssText = 'font-size:.78rem;font-family:Sarabun,sans-serif;color:rgba(255,255,255,.55);margin-bottom:8px';
+  if(groups.length > 1){
+    var labels = groups.map(function(g){ return g.count + ' บท'; }).join(' + ');
+    summaryRow.textContent = labels + ' = รวม ' + totalLessons + ' บท';
+    ll.appendChild(summaryRow);
+  }
+
+  groups.forEach(function(g){
+    var groupPer = realHrs / totalLessons * g.count;
+    var row = document.createElement('div');
+    row.className = 'pl-lesson-row';
+    row.style.borderBottomColor = 'rgba(255,255,255,.12)';
+    row.innerHTML = '<div class="pl-lesson-name" style="color:rgb(237,255,40)">' + g.label + '</div><div class="pl-lesson-hrs" style="color:#fff">~' + groupPer.toFixed(1) + ' ชม.</div>';
+    ll.appendChild(row);
+  });
+
+  var perRow = document.createElement('div');
+  perRow.style.cssText = 'font-size:.8rem;font-family:Sarabun,sans-serif;color:var(--pink);font-weight:700;padding:8px 0 0;text-align:right';
+  perRow.textContent = 'เฉลี่ยบทละ ~' + perLesson.toFixed(1) + ' ชั่วโมง';
+  ll.appendChild(perRow);
+
+  // Progress
+  var usedHrs = 0, pct = 0;
+  if(startStr && realHrs > 0){
+    var start = new Date(startStr + 'T00:00:00');
+    var now2 = new Date(); now2.setHours(0,0,0,0);
+    var daysPassed = Math.max(0, Math.round((now2 - start) / (1000*60*60*24)));
+    usedHrs = daysPassed * hrsPerDay;
+    var totalPlanned = (effectiveDays + daysPassed) * hrsPerDay;
+    pct = totalPlanned > 0 ? Math.min(100, Math.round(usedHrs / totalPlanned * 100)) : 0;
+    var barColor = pct === 0 ? 'rgb(175,255,235)' : pct >= 80 ? 'var(--pink)' : 'rgb(237,255,40)';
+    document.getElementById('pl-progress-fill').style.background = barColor;
+    document.getElementById('pl-progress-fill').style.width = pct + '%';
+    document.getElementById('pl-used-label').textContent = 'ใช้ไปแล้ว ~' + usedHrs.toFixed(1) + ' ชม.';
+    document.getElementById('pl-pct-label').textContent = pct + '%';
+  } else {
+    document.getElementById('pl-progress-fill').style.background = 'rgb(175,255,235)';
+    document.getElementById('pl-progress-fill').style.width = '0%';
+    document.getElementById('pl-used-label').textContent = 'เริ่มนับเมื่อตั้งค่าครั้งแรก';
+    document.getElementById('pl-pct-label').textContent = '0%';
+  }
+}
+
+// ===== DATE MODAL =====
+function openDateModal(){
+  var saved = localStorage.getItem(EXAM_KEY);
+  var input = document.getElementById('date-input');
+  if(saved) input.value = saved;
+  renderDateModalCountdown();
+  document.getElementById('date-modal').classList.add('open');
+}
+function closeDateModal(){
+  document.getElementById('date-modal').classList.remove('open');
+}
+function closeDateModalOuter(e){
+  if(e.target === document.getElementById('date-modal')) closeDateModal();
+}
+function saveDateModal(){
+  var val = document.getElementById('date-input').value;
+  if(!val) return;
+  localStorage.setItem(EXAM_KEY, val);
+  renderDateModalCountdown();
+  updateMockCountdown();
+}
+function clearDateModal(){
+  localStorage.removeItem(EXAM_KEY);
+  document.getElementById('date-input').value = '';
+  renderDateModalCountdown();
+  updateMockCountdown();
+}
+function renderDateModalCountdown(){
+  var data = getCountdownData();
+  var cdBox = document.getElementById('date-countdown-display');
+  var emptyBox = document.getElementById('date-empty-display');
+  if(!data){
+    cdBox.style.display = 'none';
+    emptyBox.style.display = '';
+    return;
+  }
+  cdBox.style.display = '';
+  emptyBox.style.display = 'none';
+  if(data.days < 0){
+    document.getElementById('date-cd-days').textContent = 'หมดเวลา';
+    document.getElementById('date-cd-label').textContent = 'ผ่านวันสอบไปแล้ว';
+    document.getElementById('date-cd-hours').textContent = '';
+  } else if(data.days === 0){
+    document.getElementById('date-cd-days').textContent = 'วันนี้!';
+    document.getElementById('date-cd-label').textContent = 'โชคดีนะ! 🎯';
+    document.getElementById('date-cd-hours').textContent = '';
+  } else {
+    document.getElementById('date-cd-days').textContent = data.days;
+    document.getElementById('date-cd-label').textContent = 'วันที่เหลือก่อนสอบ';
+    document.getElementById('date-cd-hours').textContent = '(' + data.hours.toLocaleString() + ' ชั่วโมง)';
+  }
+}
+
+// ===== EXAM COUNTDOWN (shared key with main game) =====
+const EXAM_KEY = 'cfp_exam_date';
+function getCountdownData(){
+  var saved = localStorage.getItem(EXAM_KEY);
+  if(!saved) return null;
+  var exam = new Date(saved + 'T00:00:00');
+  var now = new Date(); now.setHours(0,0,0,0);
+  var diffMs = exam - now;
+  var days = Math.ceil(diffMs / (1000*60*60*24));
+  return { days: days, hours: days*24, dateStr: saved };
+}
+function updateMockCountdown(){
+  var el = document.getElementById('mock-countdown-text');
+  if(!el) return;
+  var data = getCountdownData();
+  if(!data){
+    el.textContent = '— ตั้งวันสอบได้ที่ปุ่มชมพูด้านล่าง —';
+  } else if(data.days < 0){
+    el.textContent = 'ผ่านวันสอบไปแล้ว';
+  } else if(data.days === 0){
+    el.textContent = 'วันสอบคือวันนี้! 🎯';
+  } else {
+    el.textContent = 'เหลืออีก ' + data.days + ' วัน (' + data.hours.toLocaleString() + ' ชั่วโมง)';
+  }
+}
+
+// ===== INIT =====
+window.addEventListener('load', function(){
+  renderHome();
+  updateMockCountdown();
+});
+</script>
+<!-- PLANNER -->
+<div class="screen" id="planner-screen">
+  <div class="planner-hdr">
+    <button class="planner-hdr-back" onclick="goHome()">←</button>
+    <div>
+      <div style="font-size:.95rem;font-weight:700;color:var(--black)">วางแผนเตรียมสอบอย่างละเอียด</div>
+      <div style="font-size:.7rem;color:rgba(0,0,0,.45);font-family:'Sarabun',sans-serif">คำนวณเวลาที่มีก่อนวันสอบ</div>
+    </div>
+  </div>
+  <div class="planner-body">
+
+    <!-- No date warning -->
+    <div class="pl-no-date" id="pl-no-date" style="display:none">
+      ⚠️ ยังไม่ได้ตั้งวันสอบ — กดปุ่มชมพูที่หน้าหลักเพื่อตั้งวันสอบก่อนนะครับ
+    </div>
+
+    <!-- Days remaining -->
+    <div class="pl-card" id="pl-days-card">
+      <div class="pl-card-title">เวลาที่เหลือก่อนสอบ</div>
+      <div class="pl-stat-row">
+        <div class="pl-stat-label">วันที่เหลือ</div>
+        <div class="pl-stat-val" id="pl-days-val">—</div>
+      </div>
+      <div class="pl-stat-row">
+        <div class="pl-stat-label">คิดเป็นชั่วโมงรวม</div>
+        <div class="pl-stat-val" id="pl-total-hrs-clock" style="color:var(--muted)">—</div>
+      </div>
+    </div>
+
+    <!-- Hours per day input -->
+    <div class="pl-card">
+      <div class="pl-card-title">เวลาที่มีต่อวัน</div>
+      <div class="pl-hrs-row">
+        <div class="pl-hrs-label">ฉันมีเวลาเตรียมสอบวันละ</div>
+        <select class="pl-hrs-select" id="pl-hrs-select" onchange="savePlannerHrs()">
+          <option value="0.5">0.5</option>
+          <option value="1">1</option>
+          <option value="1.5">1.5</option>
+          <option value="2" selected>2</option>
+          <option value="2.5">2.5</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="8">8</option>
+        </select>
+        <div style="font-size:.85rem;font-family:'Sarabun',sans-serif">ชั่วโมง</div>
+      </div>
+    </div>
+
+    <!-- Busy days -->
+    <div class="pl-card">
+      <div class="pl-card-title">วันที่ไม่ว่าง</div>
+      <div class="pl-hrs-row">
+        <div class="pl-hrs-label">วันที่<span style="color:#e63946;font-weight:700">ไม่ได้</span>เตรียมสอบ</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button onclick="changeBusyDays(-1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:#fff;font-size:1.1rem;cursor:pointer;font-family:'Prompt',sans-serif">−</button>
+          <div id="pl-busy-val" style="width:36px;text-align:center;font-size:1.1rem;font-weight:800;font-family:'Prompt',sans-serif">0</div>
+          <button onclick="changeBusyDays(1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:#fff;font-size:1.1rem;cursor:pointer;font-family:'Prompt',sans-serif">+</button>
+        </div>
+        <div style="font-size:.85rem;font-family:'Sarabun',sans-serif">วัน</div>
+      </div>
+      <div id="pl-busy-note" style="font-size:.72rem;color:var(--muted);font-family:'Sarabun',sans-serif;margin-top:8px;display:none">
+        หักออกจากวันที่เหลือทั้งหมด
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="pl-card" style="background:var(--green);border-color:rgba(0,0,0,.08)">
+      <div class="pl-card-title" style="color:rgba(0,0,0,.45)">สรุปเวลาเตรียมสอบ</div>
+      <div style="background:#004d30;border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:.82rem;font-family:'Sarabun',sans-serif;color:rgba(255,255,255,.7)">เวลาเตรียมสอบที่มีทั้งหมด</div>
+        <div id="pl-real-hrs" style="font-size:1.3rem;font-weight:800;color:#fff">— ชั่วโมง</div>
+      </div>
+      <div style="background:#004d30;border-radius:12px;padding:14px 16px;margin-bottom:12px">
+        <div style="font-size:.78rem;color:rgba(255,255,255,.55);font-family:'Sarabun',sans-serif;margin-bottom:8px" id="pl-lesson-label">เฉลี่ยต่อบทเรียน (3 บท)</div>
+        <div id="pl-lesson-list"></div>
+      </div>
+      <div style="font-size:.78rem;color:rgba(0,0,0,.45);font-family:'Sarabun',sans-serif;margin-bottom:6px">ความคืบหน้าเวลาที่ใช้ไป</div>
+      <div class="progress-track" style="background:rgba(0,0,0,.15)"><div class="progress-fill" id="pl-progress-fill" style="width:0%"></div></div>
+      <div class="pl-progress-labels" style="color:rgba(0,0,0,.5)">
+        <span id="pl-used-label">ใช้ไป 0 ชั่วโมง</span>
+        <span id="pl-pct-label">0%</span>
+      </div>
+    </div>
+
+    <!-- Extra subjects -->
+    <div class="pl-card">
+      <div class="pl-card-title">รวมเนื้อหาวิชาอื่น</div>
+      <div style="font-size:.84rem;font-family:'Sarabun',sans-serif;color:var(--black);margin-bottom:12px">เพิ่มเวลาเตรียมตัวรวมกับเนื้อหาอื่นหรือไม่?</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button id="pl-extra-yes" onclick="setExtra(true)" class="pl-toggle-btn pl-toggle-no" style="flex:1">Yes</button>
+        <button id="pl-extra-no" onclick="setExtra(false)" class="pl-toggle-btn pl-toggle-no" style="flex:1">No</button>
+      </div>
+      <div id="pl-extra-options" style="display:none;flex-direction:column;gap:8px">
+        <label class="pl-checkbox-row">
+          <input type="checkbox" id="chk-cfp1" onchange="savePlannerHrs()">
+          <span class="pl-checkbox-label">CFP ชุดวิชาที่ 1 <span style="color:var(--muted)">(8 บทเรียน)</span></span>
+        </label>
+        <label class="pl-checkbox-row">
+          <input type="checkbox" id="chk-cfp2" onchange="savePlannerHrs()">
+          <span class="pl-checkbox-label">CFP ชุดวิชาที่ 2 เนื้อหาวิชา <span style="color:var(--muted)">(9 บทเรียน)</span></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div style="font-size:.72rem;color:var(--muted);font-family:'Sarabun',sans-serif;text-align:center;line-height:1.8;padding:0 4px 8px">
+      ตัวเลขนี้เป็นการประมาณการให้เห็นเวลาเตรียมตัวที่มีอยู่จริงเท่านั้น<br>ผู้สอบต้องบริหารเวลาให้เหมาะกับบริบทของตัวเองครับ
+    </div>
+
+  </div>
+</div>
+
+<!-- COMING SOON -->
+<div class="screen" id="coming-soon-screen">
+  <div style="width:100%;background:var(--green);display:flex;align-items:center;gap:12px;padding:18px 18px 20px">
+    <button class="back-btn" style="border-color:rgba(0,0,0,.2);color:var(--black)" onclick="goHome()">←</button>
+    <div>
+      <div style="font-size:.95rem;font-weight:700;color:var(--black)">เกมอื่นๆ และแหล่งความรู้</div>
+      <div style="font-size:.7rem;color:rgba(0,0,0,.45);font-family:'Sarabun',sans-serif">กำลังดำเนินการ</div>
+    </div>
+  </div>
+  <div style="width:100%;max-width:420px;padding:60px 18px;display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center">
+    <div style="font-size:72px;line-height:1;animation:wobble 2s ease infinite">🚧</div>
+    <div style="font-size:1.3rem;font-weight:800;color:var(--black)">อยู่ระหว่างดำเนินการ</div>
+    <div style="font-size:.88rem;color:var(--muted);font-family:'Sarabun',sans-serif;line-height:1.8">เนื้อหาส่วนนี้กำลังอยู่ระหว่างการพัฒนา<br>โปรดติดตามการอัปเดตเร็วๆ นี้</div>
+    <button class="btn-blue" style="margin-top:12px" onclick="goHome()">← กลับหน้าหลัก</button>
+  </div>
+</div>
+
+<!-- ANSWER REVIEW SCREEN -->
+<div class="screen" id="answer-screen">
+  <div class="quiz-bar">
+    <button class="back-btn" onclick="goHome()">←</button>
+    <div class="qb-info">
+      <div class="qb-title" id="ans-set-title">—</div>
+      <div class="qb-sub" id="ans-set-sub">—</div>
+    </div>
+    <button class="check-btn" onclick="openAnsGrid()" style="background:var(--green);color:var(--black)">เลือกข้อ</button>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-bar" id="ans-progress-bar" style="width:0%"></div>
+  </div>
+  <div class="quiz-body" id="ans-body"></div>
+  <div class="quiz-nav">
+    <div class="quiz-nav-line"></div>
+    <div class="quiz-nav-btns">
+      <button class="btn-prev" id="ans-btn-prev" onclick="ansNav(-1)">← ก่อนหน้า</button>
+      <button class="btn-next" id="ans-btn-next" onclick="ansNav(1)">ถัดไป →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ANSWER GRID MODAL -->
+<div class="modal-overlay" id="ans-grid-modal" onclick="if(event.target===this)closeAnsGrid()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📋 เลือกข้อที่ต้องการดูเฉลย</div>
+    <div class="q-grid-wrap" id="ans-grid"></div>
+    <button class="modal-close" onclick="closeAnsGrid()">ปิด</button>
+  </div>
+</div>
+
+<!-- GRID MODAL -->
+<div class="modal-overlay" id="grid-modal" onclick="closeGridModalOuter(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📋 เลือกข้อ</div>
+    <div style="font-size:.75rem;color:var(--muted);font-family:'Sarabun',sans-serif;margin-bottom:12px">
+      <span style="display:inline-flex;align-items:center;gap:5px;margin-right:12px">
+        <span style="width:14px;height:14px;border-radius:4px;background:rgba(255,83,255,.12);border:2px solid rgba(255,83,255,.35);display:inline-block"></span>ตอบแล้ว
+      </span>
+      <span style="display:inline-flex;align-items:center;gap:5px">
+        <span style="width:14px;height:14px;border-radius:4px;background:#f0f0e8;display:inline-block"></span>ยังไม่ตอบ
+      </span>
+    </div>
+    <div class="q-grid-wrap" id="q-grid"></div>
+    <button class="modal-close" onclick="closeGridModal()">ปิด</button>
+  </div>
+</div>
+
+<!-- DATE MODAL -->
+<div class="modal-overlay" id="date-modal" onclick="closeDateModalOuter(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📅 ตั้งวันสอบ</div>
+    <div id="date-countdown-display" style="background:var(--pink);border-radius:14px;padding:20px;text-align:center;color:#fff;margin-bottom:16px;display:none">
+      <div id="date-cd-days" style="font-size:2.8rem;font-weight:800;line-height:1"></div>
+      <div id="date-cd-label" style="font-size:.82rem;font-family:'Sarabun',sans-serif;opacity:.85;margin-top:4px"></div>
+      <div id="date-cd-hours" style="font-size:1rem;font-weight:700;opacity:.9;margin-top:2px"></div>
+    </div>
+    <div id="date-empty-display" style="background:#fff;border:2px dashed #e0ded6;border-radius:14px;padding:18px;text-align:center;color:#888;font-family:'Sarabun',sans-serif;font-size:.88rem;margin-bottom:16px">
+      ยังไม่ได้ตั้งวันสอบ
+    </div>
+    <input type="date" id="date-input" style="width:100%;padding:13px 14px;border:2px solid #e0ded6;border-radius:11px;font-family:'Prompt',sans-serif;font-size:1rem;color:#1A1A1A;background:#fff;outline:none;box-sizing:border-box;margin-bottom:10px">
+    <button onclick="saveDateModal()" style="width:100%;padding:14px;background:var(--pink);color:#fff;border:none;border-radius:13px;font-family:'Prompt',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;margin-bottom:8px">บันทึกวันสอบ</button>
+    <button onclick="clearDateModal()" style="width:100%;padding:12px;background:#fff;color:#888;border:1px solid #e0ded6;border-radius:13px;font-family:'Prompt',sans-serif;font-size:.88rem;cursor:pointer;margin-bottom:8px">ล้างวันที่</button>
+    <button onclick="closeDateModal()" style="width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:11px;font-family:'Prompt',sans-serif;font-weight:600;font-size:.88rem;cursor:pointer">ปิด</button>
+  </div>
+</div>
+
+</body>
+</html>
